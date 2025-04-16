@@ -6,6 +6,26 @@ param (
     [switch]$h = $false
 )
 
+# Add certificate validation bypass
+function Disable-CertificateValidation {
+    if (-not ([System.Management.Automation.PSTypeName]'TrustAllCertsPolicy').Type) {
+        Add-Type -TypeDefinition @"
+            using System.Net;
+            using System.Security.Cryptography.X509Certificates;
+            public class TrustAllCertsPolicy : ICertificatePolicy {
+                public bool CheckValidationResult(ServicePoint srvPoint, X509Certificate certificate, WebRequest request, int certificateProblem) {
+                    return true;
+                }
+            }
+"@
+        [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    }
+}
+
+# Run the certificate validation bypass
+Disable-CertificateValidation
+
 # Help function to display usage information
 function Show-Help {
     Write-Host "Usage: .\login.ps1 -u <username> -p <password>"
@@ -44,7 +64,7 @@ $password = $p
 function Log-Message {
     param([string]$message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$timestamp: $message" | Out-File -Append -FilePath $LOG_FILE
+    "$timestamp\: $message" | Out-File -Append -FilePath $LOG_FILE
 }
 
 # Check if username and password are provided in command line arguments
@@ -116,7 +136,7 @@ while ($true) {
         }
 
         # Make a request to the extracted link
-        $subresponse = Invoke-WebRequest -Uri $link -UseBasicParsing -SkipCertificateCheck
+        $subresponse = Invoke-WebRequest -Uri $link -UseBasicParsing
         $subresponseContent = $subresponse.Content
         Log-Message $subresponseContent
 
@@ -142,7 +162,7 @@ while ($true) {
             "Accept-Encoding" = "gzip, deflate, br"
             "Accept-Language" = "en-US,en;q=0.7"
             "Cache-Control" = "max-age=0"
-            "Connection" = "keep-alive"
+            # "Connection" = "keep-alive"
             "Content-Type" = "application/x-www-form-urlencoded"
             "Host" = "172.16.0.2:1003"
             "Origin" = "https://172.16.0.2:1003"
@@ -164,7 +184,7 @@ while ($true) {
         }
 
         # Make login request
-        $loginResponse = Invoke-WebRequest -Uri "https://172.16.0.2:1003/" -Method Post -Headers $headers -Body $body -SkipCertificateCheck -UseBasicParsing
+        $loginResponse = Invoke-WebRequest -Uri "https://172.16.0.2:1003/" -Method Post -Headers $headers -Body $body -UseBasicParsing
         Log-Message "Login response status: $($loginResponse.StatusCode)"
 
         Log-Message "Login attempt completed, sleeping for 40 minutes..."
