@@ -43,60 +43,60 @@ if [ -n "$username" ] && [ -n "$password" ]; then
   echo "$username" > "$CREDENTIALS_FILE"
   echo "$password" >> "$CREDENTIALS_FILE"
   chmod 600 "$CREDENTIALS_FILE"
-  echo "Credentials saved to $CREDENTIALS_FILE" >> "$HOME/my_script.log"
+  echo "Credentials saved to $CREDENTIALS_FILE" >> "$HOME/RVCE_AutoLogin.log"
 else
   # Try to read from credentials file if it exists
   if [ -f "$CREDENTIALS_FILE" ]; then
-    echo "Reading credentials from $CREDENTIALS_FILE" >> "$HOME/my_script.log"
+    echo "Reading credentials from $CREDENTIALS_FILE" >> "$HOME/RVCE_AutoLogin.log"
     username=$(sed -n '1p' "$CREDENTIALS_FILE")
     password=$(sed -n '2p' "$CREDENTIALS_FILE")
   else
-    echo "Error: Username and password not provided and no stored credentials found." >> "$HOME/my_script.log"
+    echo "Error: Username and password not provided and no stored credentials found." >> "$HOME/RVCE_AutoLogin.log"
     show_help
   fi
 fi
 
 # Verify we have credentials before proceeding
 if [ -z "$username" ] || [ -z "$password" ]; then
-  echo "Error: Could not obtain valid credentials." >> "$HOME/my_script.log"
+  echo "Error: Could not obtain valid credentials." >> "$HOME/RVCE_AutoLogin.log"
   exit 1
 fi
 
 # Main loop to keep checking and maintaining network connection
 while true; do
-  echo "$(date): Checking network connection..." >> "$HOME/my_script.log"
+  echo "$(date): Checking network connection..." >> "$HOME/RVCE_AutoLogin.log"
   
   # Send a GET request to http://rvce.edu.in using curl and extract URLs from the response
   response=$(curl -s -X GET "http://rvce.edu.in")
 
   # Check if the response contains "302 Found" title, which indicates already connected
   if echo "$response" | grep -q "<title>302 Found</title>"; then
-    echo "$(date): You are already connected to the network." >> "$HOME/my_script.log"
+    echo "$(date): You are already connected to the network." >> "$HOME/RVCE_AutoLogin.log"
     sleep 2400
     continue
   fi
 
-  echo "$(date): Connection needed, attempting to log in..." >> "$HOME/my_script.log"
+  echo "$(date): Connection needed, attempting to log in..." >> "$HOME/RVCE_AutoLogin.log"
 
   # Extract the full URL from the response
   link=$(echo "$response" | grep -oP 'window.location="\K[^"]+')
 
   # Extract the token after the question mark from the fgtauth URL
   token=$(echo "$response" | grep -oP 'fgtauth\?\K[a-zA-Z0-9=_-]+')
-  echo "Link: $link" >> "$HOME/my_script.log"
-  echo "Token: $token" >> "$HOME/my_script.log"
+  echo "Link: $link" >> "$HOME/RVCE_AutoLogin.log"
+  echo "Token: $token" >> "$HOME/RVCE_AutoLogin.log"
 
   # Make a request to the extracted link
   subresponse=$(curl -s -L -k "$link")
-  echo "$subresponse" >> "$HOME/my_script.log"
+  echo "$subresponse" >> "$HOME/RVCE_AutoLogin.log"
 
   # Extract 4Tredir value from the subresponse
   redir_value=$(echo "$subresponse" | grep -oP '<input type="hidden" name="4Tredir" value="\K[^"]+')
-  echo "4Tredir value: $redir_value" >> "$HOME/my_script.log"
+  echo "4Tredir value: $redir_value" >> "$HOME/RVCE_AutoLogin.log"
 
   # Extract magic value from the subresponse
   magic_value=$(echo "$subresponse" | grep -oP '<input type="hidden" name="magic" value="\K[^"]+')
-  echo "Magic value: $magic_value" >> "$HOME/my_script.log"
+  echo "Magic value: $magic_value" >> "$HOME/RVCE_AutoLogin.log"
 
   curl -k -X POST \
     -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8" \
@@ -123,9 +123,9 @@ while true; do
     -d "username=$username" \
     -d "password=$password" \
     -L \
-    https://172.16.0.2:1003/ >> "$HOME/my_script.log"
+    https://172.16.0.2:1003/ >> "$HOME/RVCE_AutoLogin.log"
     
-  echo "$(date): Login attempt completed, sleeping for 40 minutes..." >> "$HOME/my_script.log"
+  echo "$(date): Login attempt completed, sleeping for 40 minutes..." >> "$HOME/RVCE_AutoLogin.log"
   sleep 2400
 done
 

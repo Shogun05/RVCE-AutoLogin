@@ -14,15 +14,21 @@ fi
 echo "Found login.sh in home directory. Proceeding with setup..."
 chmod +x $HOME/login.sh
 
-# Prompt for credentials and store them
-echo "Please enter your network login credentials:"
-read -p "Username: " username
-read -sp "Password: " password
-echo
+# Check if credentials file already exists
+if [ -f "$HOME/.credentials" ]; then
+    echo "Credentials file already exists in $HOME/.credentials"
+    echo "Using existing credentials..."
+else
+    # Prompt for credentials and store them
+    echo "Please enter your network login credentials:"
+    read -p "Username: " username
+    read -sp "Password: " password
+    echo
 
-# Create .credentials file with username and password
-echo "$username" > "$HOME/.credentials"
-echo "$password" >> "$HOME/.credentials"
+    # Create .credentials file with username and password
+    echo "$username" > "$HOME/.credentials"
+    echo "$password" >> "$HOME/.credentials"
+fi
 
 # Secure the file by restricting permissions (only owner can read/write)
 chmod 600 "$HOME/.credentials"
