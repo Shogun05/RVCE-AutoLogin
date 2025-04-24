@@ -107,6 +107,7 @@ while ($true) {
         # Make web request with error handling
         $response = Invoke-WebRequest -Uri "http://rvce.edu.in" -UseBasicParsing -ErrorAction SilentlyContinue
         $responseContent = $response.Content
+        Log-Message "Response from rvce: $($response.Content)"
 
         # Check if already connected
         if ($responseContent -match "<title>302 Found</title>") {
@@ -185,6 +186,7 @@ while ($true) {
 
         # Make login request
         $loginResponse = Invoke-WebRequest -Uri "https://172.16.0.2:1003/" -Method Post -Headers $headers -Body $body -UseBasicParsing
+        Log-Message "Response: $($loginResponse.Content)"
         Log-Message "Login response status: $($loginResponse.StatusCode)"
 
         Log-Message "Login attempt completed, sleeping for 40 minutes..."
